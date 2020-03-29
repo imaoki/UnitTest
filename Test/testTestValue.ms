@@ -1,4 +1,4 @@
-/*! © 2019 imaoki | MIT License | https://github.com/imaoki */
+/*! © 2020 imaoki | MIT License | https://github.com/imaoki */
 (
   -- clearListener()
 
@@ -22,6 +22,90 @@
   local v2
 
   testDef = fileIn (parentDir + @"\TestValue.ms")
+
+  -- 数が等しいかどうか
+  -- Array
+  testObj = testDef #(1, 2)
+  actual = testObj.CountEquals 2
+  expected = true
+  assert (actual == expected)
+  -- BitArray
+  testObj = testDef #{1, 2}
+  actual = testObj.CountEquals 2
+  expected = true
+  assert (actual == expected)
+
+  -- 数が以上かどうか
+  -- Array
+  testObj = testDef #(1, 2)
+  actual = testObj.CountGreaterOrEquals 2
+  expected = true
+  assert (actual == expected)
+  -- BitArray
+  testObj = testDef #{1, 2}
+  actual = testObj.CountGreaterOrEquals 2
+  expected = true
+  assert (actual == expected)
+
+  -- 数が超えるかどうか
+  -- 失敗
+  -- Array
+  testObj = testDef #(1, 2)
+  actual = testObj.CountGreaterThan 2
+  expected = false
+  assert (actual == expected)
+  -- BitArray
+  testObj = testDef #{1, 2}
+  actual = testObj.CountGreaterThan 2
+  expected = false
+  assert (actual == expected)
+  -- 成功
+  -- Array
+  testObj = testDef #(1, 2)
+  actual = testObj.CountGreaterThan 1
+  expected = true
+  assert (actual == expected)
+  -- BitArray
+  testObj = testDef #{1, 2}
+  actual = testObj.CountGreaterThan 1
+  expected = true
+  assert (actual == expected)
+
+  -- 数が以下かどうか
+  -- Array
+  testObj = testDef #(1, 2)
+  actual = testObj.CountLessOrEquals 2
+  expected = true
+  assert (actual == expected)
+  -- BitArray
+  testObj = testDef #{1, 2}
+  actual = testObj.CountLessOrEquals 2
+  expected = true
+  assert (actual == expected)
+
+  -- 数が未満かどうか
+  -- 失敗
+  -- Array
+  testObj = testDef #(1, 2)
+  actual = testObj.CountLessThan 2
+  expected = false
+  assert (actual == expected)
+  -- BitArray
+  testObj = testDef #{1, 2}
+  actual = testObj.CountLessThan 2
+  expected = false
+  assert (actual == expected)
+  -- 成功
+  -- Array
+  testObj = testDef #(1, 2)
+  actual = testObj.CountLessThan 3
+  expected = true
+  assert (actual == expected)
+  -- BitArray
+  testObj = testDef #{1, 2}
+  actual = testObj.CountLessThan 3
+  expected = true
+  assert (actual == expected)
 
   -- 大文字と小文字を区別する
   testObj = testDef "a"
@@ -57,13 +141,13 @@
   expected = true
   assert (actual == expected)
 
-  -- 文字列でプロパティを調査
+  -- 名前値でプロパティを調査
   testObj = testDef (DataPair Zero:0 One:1)
   actual = testObj.HasProp #Zero
   expected = true
   assert (actual == expected)
 
-  -- 名前値でプロパティを調査
+  -- 文字列でプロパティを調査
   actual = testObj.HasProp "One"
   assert (actual == expected)
 
@@ -309,6 +393,8 @@
   actual = testObj.Equals (testDef (DotNetClass "System.IO.Path"))
   expected = false
   assert (actual == expected)
+
+  -- DotNetMethod
 
   -- DotNetObject
   -- 型判定

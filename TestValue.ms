@@ -1,4 +1,4 @@
-/*! © 2019 imaoki | MIT License | https://github.com/imaoki */
+/*! © 2020 imaoki | MIT License | https://github.com/imaoki */
 /**
 テストで使用する値を格納する。
 */
@@ -15,39 +15,132 @@ struct TestValue (
   private regexType,
 
   /**
-  指定したオブジェクトが現在のオブジェクトと等しいかどうかを判断する。
+  `Array`または`BitArray`の要素数が指定の数と等しいかどうかを判定する。
+  @param count <Integer>
+  @return <BooleanClass>
+  */
+  public fn CountEquals count = (
+    local result = false
+    case of (
+      (this.IsArray()): result = this.Value.Count == count
+      (this.IsBitArray()): result = this.Value.NumberSet == count
+      default: ()
+    )
+    result
+  ),
+
+  /**
+  `Array`または`BitArray`の要素数が指定の数以上かどうかを判定する。
+  @param count <Integer>
+  @return <BooleanClass>
+  */
+  public fn CountGreaterOrEquals count = (
+    local result = false
+    case of (
+      (this.IsArray()): result = this.Value.Count >= count
+      (this.IsBitArray()): result = this.Value.NumberSet >= count
+      default: ()
+    )
+    result
+  ),
+
+  /**
+  `Array`または`BitArray`の要素数が指定の数を超えるかどうかを判定する。
+  @param count <Integer>
+  @return <BooleanClass>
+  */
+  public fn CountGreaterThan count = (
+    local result = false
+    case of (
+      (this.IsArray()): result = this.Value.Count > count
+      (this.IsBitArray()): result = this.Value.NumberSet > count
+      default: ()
+    )
+    result
+  ),
+
+  /**
+  `Array`または`BitArray`の要素数が指定の数以下かどうかを判定する。
+  @param count <Integer>
+  @return <BooleanClass>
+  */
+  public fn CountLessOrEquals count = (
+    local result = false
+    case of (
+      (this.IsArray()): result = this.Value.Count <= count
+      (this.IsBitArray()): result = this.Value.NumberSet <= count
+      default: ()
+    )
+    result
+  ),
+
+  /**
+  `Array`または`BitArray`の要素数が指定の数未満かどうかを判定する。
+  @param count <Integer>
+  @return <BooleanClass>
+  */
+  public fn CountLessThan count = (
+    local result = false
+    case of (
+      (this.IsArray()): result = this.Value.Count < count
+      (this.IsBitArray()): result = this.Value.NumberSet < count
+      default: ()
+    )
+    result
+  ),
+
+  /**
+  指定したオブジェクトが現在のオブジェクトと等しいかどうかを判定する。
   @param obj <TestValue>
   @return <BooleanClass>
   @remark
-  * 数値で構成される複合値は各要素の数値を`==`演算子ではなく`close_enough`関数を用いて比較する。
+  * 数値で構成される複合型は各要素の数値を`==`演算子ではなく`close_enough`関数を用いて比較する。
 
-  * 配列の場合は全ての要素を再帰的に比較する。
+  * 配列や`DataPair`等の複合型は再帰的に比較する。
 
   * `Equals`メソッドを持っているオブジェクトは`Equals`メソッドを使用する。
 
   * 正規表現オブジェクトは`ToString`メソッドによるパターン文字列と`Options`プロパティをそれぞれ比較する。
+
+  * プロパティアクセスによる`MAXScriptFunction`値の比較は失敗する。
+    そのため関数値を比較する場合は一旦変数に格納し、その変数を用いてインスタンスを生成する。
+
+    アサーション失敗
+    : ```maxscript
+      this.actual = ::TestValue this.method
+      this.expected = ::TestValue this.method
+      assert (this.actual.Equals this.expected == true)
+      ```
+
+    アサーション成功
+    : ```maxscript
+      local f = this.meshod
+      this.actual = ::TestValue f
+      this.expected = ::TestValue f
+      assert (this.actual.Equals this.expected == true)
+      ```
+
+  * `DotNetMethod`の比較は常に`false`になる。
   */
   public fn Equals obj = (
     local isEquals = false
     if this.IsTestValue obj do (
+      local testDef = classOf this
       isEquals = case of (
         (this.IsAngleAxis() and obj.IsAngleAxis()): (
-          local t1 = ::TestValue this.Value.Angle
-          local t2 = ::TestValue this.Value.Axis
-          local t3 = ::TestValue this.Value.NumRevs
-          local o1 = ::TestValue obj.Value.Angle
-          local o2 = ::TestValue obj.Value.Axis
-          local o3 = ::TestValue obj.Value.NumRevs
+          local t1 = testDef this.Value.Angle
+          local t2 = testDef this.Value.Axis
+          local t3 = testDef this.Value.NumRevs
+          local o1 = testDef obj.Value.Angle
+          local o2 = testDef obj.Value.Axis
+          local o3 = testDef obj.Value.NumRevs
           t1.Equals o1 and t2.Equals o2 and t3.Equals o3
         )
-        (
-          (this.IsArray() or this.IsArrayParameter()) \
-              and (obj.IsArray() or obj.IsArrayParameter())
-        ): (
+        (this.IsArrayOrArrayParameter() or obj.IsArrayOrArrayParameter()): (
           local result = obj.Value.Count == this.Value.Count
           for i = 1 to this.Value.Count while result do (
-            local t1 = ::TestValue this.Value[i]
-            local o1 = ::TestValue obj.Value[i]
+            local t1 = testDef this.Value[i]
+            local o1 = testDef obj.Value[i]
             result = t1.Equals o1
           )
           result
@@ -57,8 +150,8 @@ struct TestValue (
               and obj.Value.Columns == this.Value.Columns
           for i = 1 to this.Value.Rows while result do (
             for j = 1 to this.Value.Columns while result do (
-              local t1 = ::TestValue this.Value[i][j]
-              local o1 = ::TestValue obj.Value[i][j]
+              local t1 = testDef this.Value[i][j]
+              local o1 = testDef obj.Value[i][j]
               result = t1.Equals o1
             )
           )
@@ -69,57 +162,57 @@ struct TestValue (
               and (this.Value * obj.Value).NumberSet == this.Value.NumberSet
         )
         (this.IsBox2() and obj.IsBox2()): (
-          local t1 = ::TestValue this.Value.X
-          local t2 = ::TestValue this.Value.Y
-          local t3 = ::TestValue this.Value.W
-          local t4 = ::TestValue this.Value.H
-          local o1 = ::TestValue obj.Value.X
-          local o2 = ::TestValue obj.Value.Y
-          local o3 = ::TestValue obj.Value.W
-          local o4 = ::TestValue obj.Value.H
+          local t1 = testDef this.Value.X
+          local t2 = testDef this.Value.Y
+          local t3 = testDef this.Value.W
+          local t4 = testDef this.Value.H
+          local o1 = testDef obj.Value.X
+          local o2 = testDef obj.Value.Y
+          local o3 = testDef obj.Value.W
+          local o4 = testDef obj.Value.H
           t1.Equals o1 and t2.Equals o2 and t3.Equals o3 and t4.Equals o4
         )
         (this.IsBox3() and obj.IsBox3()): (
-          local t1 = ::TestValue this.Value.Min
-          local t2 = ::TestValue this.Value.Max
-          local o1 = ::TestValue obj.Value.Min
-          local o2 = ::TestValue obj.Value.Max
+          local t1 = testDef this.Value.Min
+          local t2 = testDef this.Value.Max
+          local o1 = testDef obj.Value.Min
+          local o2 = testDef obj.Value.Max
           t1.Equals o1 and t2.Equals o2
         )
         (this.IsDataPair() and obj.IsDataPair()): (
-          local t1 = ::TestValue this.Value.V1
-          local t2 = ::TestValue this.Value.V2
-          local t3 = ::TestValue (getPropNames this.Value)
-          local o1 = ::TestValue obj.Value.V1
-          local o2 = ::TestValue obj.Value.V2
-          local o3 = ::TestValue (getPropNames obj.Value)
+          local t1 = testDef this.Value.V1
+          local t2 = testDef this.Value.V2
+          local t3 = testDef (getPropNames this.Value)
+          local o1 = testDef obj.Value.V1
+          local o2 = testDef obj.Value.V2
+          local o3 = testDef (getPropNames obj.Value)
           t1.Equals o1 and t2.Equals o2 and t3.Equals o3
         )
         (this.IsEulerAngles() and obj.IsEulerAngles()): (
-          local t1 = ::TestValue this.Value.X
-          local t2 = ::TestValue this.Value.Y
-          local t3 = ::TestValue this.Value.Z
-          local o1 = ::TestValue obj.Value.X
-          local o2 = ::TestValue obj.Value.Y
-          local o3 = ::TestValue obj.Value.Z
+          local t1 = testDef this.Value.X
+          local t2 = testDef this.Value.Y
+          local t3 = testDef this.Value.Z
+          local o1 = testDef obj.Value.X
+          local o2 = testDef obj.Value.Y
+          local o3 = testDef obj.Value.Z
           t1.Equals o1 and t2.Equals o2 and t3.Equals o3
         )
         (this.IsInterval() and obj.IsInterval()): (
-          local t1 = ::TestValue this.Value.Start
-          local t2 = ::TestValue this.Value.End
-          local o1 = ::TestValue obj.Value.Start
-          local o2 = ::TestValue obj.Value.End
+          local t1 = testDef this.Value.Start
+          local t2 = testDef this.Value.End
+          local o1 = testDef obj.Value.Start
+          local o2 = testDef obj.Value.End
           t1.Equals o1 and t2.Equals o2
         )
         (this.IsMatrix3() and obj.IsMatrix3()): (
-          local t1 = ::TestValue this.Value[1]
-          local t2 = ::TestValue this.Value[2]
-          local t3 = ::TestValue this.Value[3]
-          local t4 = ::TestValue this.Value[4]
-          local o1 = ::TestValue obj.Value[1]
-          local o2 = ::TestValue obj.Value[2]
-          local o3 = ::TestValue obj.Value[3]
-          local o4 = ::TestValue obj.Value[4]
+          local t1 = testDef this.Value[1]
+          local t2 = testDef this.Value[2]
+          local t3 = testDef this.Value[3]
+          local t4 = testDef this.Value[4]
+          local o1 = testDef obj.Value[1]
+          local o2 = testDef obj.Value[2]
+          local o3 = testDef obj.Value[3]
+          local o4 = testDef obj.Value[4]
           t1.Equals o1 and t2.Equals o2 and t3.Equals o3 and t4.Equals o4
         )
         (this.IsNumber() and obj.IsNumber()): (
@@ -129,51 +222,51 @@ struct TestValue (
           close_enough f1 f2 10
         )
         (this.IsPoint2() and obj.IsPoint2()): (
-          local t1 = ::TestValue this.Value.X
-          local t2 = ::TestValue this.Value.Y
-          local o1 = ::TestValue obj.Value.X
-          local o2 = ::TestValue obj.Value.Y
+          local t1 = testDef this.Value.X
+          local t2 = testDef this.Value.Y
+          local o1 = testDef obj.Value.X
+          local o2 = testDef obj.Value.Y
           t1.Equals o1 and t2.Equals o2
         )
         (this.IsPoint3() and obj.IsPoint3()): (
-          local t1 = ::TestValue this.Value.X
-          local t2 = ::TestValue this.Value.Y
-          local t3 = ::TestValue this.Value.Z
-          local o1 = ::TestValue obj.Value.X
-          local o2 = ::TestValue obj.Value.Y
-          local o3 = ::TestValue obj.Value.Z
+          local t1 = testDef this.Value.X
+          local t2 = testDef this.Value.Y
+          local t3 = testDef this.Value.Z
+          local o1 = testDef obj.Value.X
+          local o2 = testDef obj.Value.Y
+          local o3 = testDef obj.Value.Z
           t1.Equals o1 and t2.Equals o2 and t3.Equals o3
         )
         (this.IsPoint4() and obj.IsPoint4()): (
-          local t1 = ::TestValue this.Value.X
-          local t2 = ::TestValue this.Value.Y
-          local t3 = ::TestValue this.Value.Z
-          local t4 = ::TestValue this.Value.W
-          local o1 = ::TestValue obj.Value.X
-          local o2 = ::TestValue obj.Value.Y
-          local o3 = ::TestValue obj.Value.Z
-          local o4 = ::TestValue obj.Value.W
+          local t1 = testDef this.Value.X
+          local t2 = testDef this.Value.Y
+          local t3 = testDef this.Value.Z
+          local t4 = testDef this.Value.W
+          local o1 = testDef obj.Value.X
+          local o2 = testDef obj.Value.Y
+          local o3 = testDef obj.Value.Z
+          local o4 = testDef obj.Value.W
           t1.Equals o1 and t2.Equals o2 and t3.Equals o3 and t4.Equals o4
         )
         (this.IsQuat() and obj.IsQuat()): (
-          local t1 = ::TestValue this.Value.Angle
-          local t2 = ::TestValue this.Value.Axis
-          local o1 = ::TestValue obj.Value.Angle
-          local o2 = ::TestValue obj.Value.Axis
+          local t1 = testDef this.Value.Angle
+          local t2 = testDef this.Value.Axis
+          local o1 = testDef obj.Value.Angle
+          local o2 = testDef obj.Value.Axis
           t1.Equals o1 and t2.Equals o2
         )
         (this.IsRay() and obj.IsRay()): (
-          local t1 = ::TestValue this.Value.Pos
-          local t2 = ::TestValue this.Value.Dir
-          local o1 = ::TestValue obj.Value.Pos
-          local o2 = ::TestValue obj.Value.Dir
+          local t1 = testDef this.Value.Pos
+          local t2 = testDef this.Value.Dir
+          local o1 = testDef obj.Value.Pos
+          local o2 = testDef obj.Value.Dir
           t1.Equals o1 and t2.Equals o2
         )
         (this.IsRegexObject() and obj.IsRegexObject()): (
-          local t1 = ::TestValue (this.Value.ToString())
-          local t2 = ::TestValue this.Value.Options
-          local o1 = ::TestValue (obj.Value.ToString())
-          local o2 = ::TestValue obj.Value.Options
+          local t1 = testDef (this.Value.ToString())
+          local t2 = testDef this.Value.Options
+          local o1 = testDef (obj.Value.ToString())
+          local o2 = testDef obj.Value.Options
           t1.Equals o1 and t2.Equals o2
         )
         (this.IsString() and obj.IsString()): (
@@ -198,7 +291,7 @@ struct TestValue (
   ),
 
   /**
-  `Equals`メソッドを持っているかどうかを判断する。
+  `Equals`メソッドを持っているかどうかを判定する。
   @return <BooleanClass>
   */
   public fn HasEquals = (
@@ -209,7 +302,7 @@ struct TestValue (
   ),
 
   /**
-  現在のオブジェクトの値が指定したプロパティを持っているかどうかを判断する。
+  現在のオブジェクトの値が指定したプロパティを持っているかどうかを判定する。
   @param propName <String|Name>
   @return <BooleanClass>
   */
@@ -221,6 +314,8 @@ struct TestValue (
   public fn IsAngleAxis = classOf this.Value == AngleAxis,
   /** @return <BooleanClass> */
   public fn IsArray = classOf this.Value == Array,
+  /** @return <BooleanClass> */
+  public fn IsArrayOrArrayParameter = this.IsArray() or this.IsArrayParameter(),
   /** @return <BooleanClass> */
   public fn IsArrayParameter = classOf this.Value == ArrayParameter,
   /** @return <BooleanClass> */

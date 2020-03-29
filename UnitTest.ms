@@ -1,4 +1,4 @@
-/*! © 2019 imaoki | MIT License | https://github.com/imaoki */
+/*! © 2020 imaoki | MIT License | https://github.com/imaoki */
 /**
 ユニットテストを行うためのサポート機能を提供する。
 */
@@ -189,6 +189,20 @@ struct UnitTest (
   ),
 
   /**
+  型の完全修飾名を取得する。
+  @param obj <Any>
+  @return <String>
+  */
+  public fn TypeOf obj = (
+    if classOf obj == DotNetClass or classOf obj == DotNetObject then (
+      (DotNet.GetType obj).FullName
+    )
+    else (
+      (classOf obj) as String
+    )
+  ),
+
+  /**
   ファイルを作成して文字列を書き込む。
   @param path <String>
   @param content <String>
@@ -227,7 +241,7 @@ struct UnitTest (
   ),
 
   /**
-  指定オブジェクトが文字エンコーディングオブジェクトかどうかを判断する。
+  指定オブジェクトが文字エンコーディングオブジェクトかどうかを判定する。
   @param obj <Any>
   @return <BooleanClass>
   */

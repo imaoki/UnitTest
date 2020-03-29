@@ -1,4 +1,4 @@
-/*! © 2019 imaoki | MIT License | https://github.com/imaoki */
+/*! © 2020 imaoki | MIT License | https://github.com/imaoki */
 
 global testCounter
 
@@ -225,6 +225,11 @@ struct InvalidTestStruct (
   assert (actual == expected)
   actual = testObj.Import pathString
   expected = "a"
+  assert (actual == expected)
+
+  -- 型の完全修飾名を取得
+  actual = testObj.TypeOf directoryClass
+  expected = "System.IO.Directory"
   assert (actual == expected)
 
   -- 水平線の出力
